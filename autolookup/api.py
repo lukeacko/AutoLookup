@@ -11,7 +11,7 @@ class VINDataError(Exception):
 
 
 ### Retry Logic ####
-def retry(func, attempts=3, delay=1, backoff=2, exceptions=(Exception,)):
+def retry(func, attempts=3, delay=1, backoff=2, exceptions=(Exception)):
     for attempt in range(1, attempts + 1):
         try:
             return func()
@@ -21,8 +21,12 @@ def retry(func, attempts=3, delay=1, backoff=2, exceptions=(Exception,)):
                 raise
             print(f"[yellow]Attempt {attempt}/{attempts} failed: {e}[/yellow]")
 
-            with Live(Spinner("dots", text=f"Retrying in {delay} seconds..."), refresh_per_second=10):
-                time.sleep(delay)
+            with Live(refresh_per_second=10) as live:
+                for remaining in range(delay, 0, -1):
+                    live.update(
+                        Spinner("dots", text=f"Retrying in {remaining} seconds...")
+                    )
+                    time.sleep(1)
 
             delay *= backoff
 
