@@ -44,7 +44,7 @@ pip install -r requirements.txt</code></pre>
 <p><strong>Dependencies:</strong> <code>requests</code>, <code>rich</code>, <code>pandas</code>, <code>openpyxl</code>, <code>reportlab</code></p>
 
 <h2>Usage 🚦</h2>
-<pre><code>python inputs.py</code></pre>
+<pre><code>python __main__.py</code></pre>
 
 <h3>Welcome Screen</h3>
 <pre>
