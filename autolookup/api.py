@@ -1,11 +1,32 @@
 import requests
+import time
 from rich.spinner import Spinner
+from rich.live import Live
 from rich.console import Console
+from rich import print
 API_URL = ("https://db.vin/api/v1/vin/{vin}")
 
 class VINDataError(Exception):
     pass
 
+
+### Retry Logic ####
+def retry(func, attempts=3, delay=1, backoff=2, exceptions=(Exception,)):
+    for attempt in range(1, attempts + 1):
+        try:
+            return func()
+        except exceptions as e:
+            if attempt == attempts:
+                # Last attempt → re-raise
+                raise
+            print(f"[yellow]Attempt {attempt}/{attempts} failed: {e}[/yellow]")
+
+            with Live(Spinner("dots", text=f"Retrying in {delay} seconds..."), refresh_per_second=10):
+                time.sleep(delay)
+
+            delay *= backoff
+
+### Validation Logic ####
 def validate_vin(vin: str):
     vin = vin.strip().upper()
 
@@ -17,6 +38,7 @@ def validate_vin(vin: str):
 
     return vin
 
+### API Interaction ###
 def get_vin_data(vin: str) -> dict:
     rich_console = Console()
     with rich_console.status("[bold green]Fetching VIN data...[/bold green]", spinner="dots"):

@@ -2,17 +2,18 @@ from rich import print
 from rich.panel import Panel
 from rich.table import Table as RichTable
 from rich.prompt import Prompt
-from api import get_vin_data, VINDataError, validate_vin
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.platypus import Table as PDFTable, TableStyle
 from reportlab.lib import colors
 import logging
 from logging.handlers import RotatingFileHandler
-firstUse = True
+from api import get_vin_data, validate_vin, retry, VINDataError
+import time
 
-# --- Logging Setup ---
+
+### Logging Setup ###
 logger = logging.getLogger("vin_cli")
 logger.setLevel(logging.DEBUG)
 
@@ -25,6 +26,8 @@ handler.setFormatter(formatter)
 
 logger.addHandler(handler)
 
+                    
+### Welcome Function ###
 def show_welcome():
     ascii_car = r"""
         ______
@@ -42,80 +45,94 @@ A fast and elegant tool for decoding vehicle VIN numbers.
 """
     print(Panel.fit(welcome_text, border_style="cyan", padding=(1, 3)))
 
+### Output Function ###
+def print_vin_data(vin: str, data: dict):
+    try:
+        table = RichTable(show_header=True, header_style="bold cyan")
+        table.add_column("Field", style="cyan", no_wrap=True)
+        table.add_column("Value", style="magenta")
 
-def print_vin_data(vin: str, data: dict):      
-    table = RichTable(show_header=True, header_style="bold cyan")
-    table.add_column("Field", style="cyan", no_wrap=True)
-    table.add_column("Value", style="magenta")
-
-    for key, value in data.items():
-        table.add_row(key, str(value))
-
-    print(Panel(table, title=f"VIN Data for {vin}", border_style="cyan"))
-
-def export_document(vin: str, data: dict):
-    date = __import__('datetime').datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    filename = f"{vin}_data.txt"
-    with open(filename, 'w') as f:
-        f.write(f"Date requested: {date}\n")
         for key, value in data.items():
-            f.write(f"{key}: {value}\n")
-            
-    print(f"[green]VIN data exported to {filename}[/green]")
-    return main(firstUse=False)
+            table.add_row(key, str(value))
 
+        print(Panel(table, title=f"VIN Data for {vin}", border_style="cyan"))
+    except Exception as e:
+        logger.error(f"Error displaying VIN data: {e}")
+        print("[red]Error displaying VIN data.[/red]")
+        return
+
+### Export Functions ###
+def export_document(vin: str, data: dict):
+    try:
+        date = __import__('datetime').datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        filename = f"{vin}_data.txt"
+        with open(filename, 'w') as f:
+            f.write(f"Date requested: {date}\n")
+            for key, value in data.items():
+                f.write(f"{key}: {value}\n")
+                
+        print(f"[green]VIN data exported to {filename}[/green]")
+    except Exception as e:
+        logger.error(f"Error exporting VIN data to TXT: {e}")
+        print("[red]Error exporting VIN data to TXT.[/red]")
+        return
 def export_pdf(vin: str, data: dict):
     filename = f"{vin}_data.pdf"
 
-    # Create PDF document
-    doc = SimpleDocTemplate(
-        filename,
-        pagesize=letter,
-        rightMargin=30,
-        leftMargin=30,
-        topMargin=30,
-        bottomMargin=18,
-    )
+    try: 
+        # Create PDF document
+        doc = SimpleDocTemplate(
+            filename,
+            pagesize=letter,
+            rightMargin=30,
+            leftMargin=30,
+            topMargin=30,
+            bottomMargin=18,
+        )
 
-    styles = getSampleStyleSheet()
-    story = []
+        styles = getSampleStyleSheet()
+        story = []
 
-    # Title
-    title = f"<para alignment='center'><b>VIN Report: {vin}</b></para>"
-    story.append(Paragraph(title, styles["Title"]))
-    story.append(Spacer(1, 12))
+        # Title
+        title = f"<para alignment='center'><b>VIN Report: {vin}</b></para>"
+        story.append(Paragraph(title, styles["Title"]))
+        story.append(Spacer(1, 12))
 
-    # Timestamp
-    from datetime import datetime
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    story.append(Paragraph(f"<b>Date Generated:</b> {timestamp}", styles["Normal"]))
-    story.append(Spacer(1, 12))
+        # Timestamp
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        story.append(Paragraph(f"<b>Date Generated:</b> {timestamp}", styles["Normal"]))
+        story.append(Spacer(1, 12))
 
-    # VIN Data Table
-    table_data = [["Data", "Value"]]
-    for key, value in data.items():
-        table_data.append([key, str(value)])
+        # VIN Data Table
+        table_data = [["Data", "Value"]]
+        for key, value in data.items():
+            table_data.append([key, str(value)])
 
-    table = PDFTable(table_data, colWidths=[150, 350])
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 12),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
-        ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-    ]))
+        table = PDFTable(table_data, colWidths=[150, 350])
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.lightgrey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
+            ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, 0), 12),
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+            ("BACKGROUND", (0, 1), (-1, -1), colors.whitesmoke),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ]))
 
-    story.append(table)
+        story.append(table)
 
-    # Build PDF
-    doc.build(story)
+        # Build PDF
+        doc.build(story)
 
-    print(f"[green]PDF exported to {filename}[/green]")
-    return main(firstUse=False)
-
+        print(f"[green]PDF exported to {filename}[/green]")
+        return 
+    except Exception as e:
+        logger.error(f"Error exporting VIN data to PDF: {e}")
+        print("[red]Error exporting VIN data to PDF.[/red]")
+        return
+### CLI Functions ###
 def after_lookup(vin: str, data: dict):
     while True:
         menu_text = """
@@ -148,8 +165,6 @@ def after_lookup(vin: str, data: dict):
         else:
             print("[red]Invalid choice. Please try again.[/red]")
 
-
-
 def main(firstUse=True):
     if firstUse:
         show_welcome()
@@ -158,6 +173,7 @@ def main(firstUse=True):
         vin = Prompt.ask("[bold yellow]Please enter VIN number[/bold yellow]")
 
         # Validate VIN
+        
         try:
             vin = validate_vin(vin)
         except VINDataError as e:
@@ -166,7 +182,7 @@ def main(firstUse=True):
 
         # Fetch data once
         try:
-            data = get_vin_data(vin)
+            data = retry(lambda: get_vin_data(vin), attempts=3, delay=2, backoff=2, exceptions=(Exception))
             logger.info(f"User entered VIN: {vin}")
             logger.info(f"Data from VIN: {data}")
         except VINDataError as e:
@@ -184,6 +200,5 @@ def main(firstUse=True):
         # Menu loop
         after_lookup(vin, data)
     
-
-
-main(firstUse=True)
+if __name__ == "__main__":
+    main(firstUse=True)
