@@ -1,8 +1,6 @@
 from rich import print
 from rich.panel import Panel
 from rich.table import Table as RichTable
-from rich.spinner import Spinner
-from rich.console import Console
 from rich.prompt import Prompt
 from api import get_vin_data, VINDataError, validate_vin
 from reportlab.lib.pagesizes import letter
@@ -10,8 +8,22 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, TableStyle
 from reportlab.platypus import Table as PDFTable, TableStyle
 from reportlab.lib import colors
-
+import logging
+from logging.handlers import RotatingFileHandler
 firstUse = True
+
+# --- Logging Setup ---
+logger = logging.getLogger("vin_cli")
+logger.setLevel(logging.DEBUG)
+
+# Log file rotates at 1MB, keeps 5 backups
+handler = RotatingFileHandler("vin_cli.log", maxBytes=1_000_000, backupCount=5)
+formatter = logging.Formatter(
+    "%(asctime)s - %(levelname)s - %(message)s"
+)
+handler.setFormatter(formatter)
+
+logger.addHandler(handler)
 
 def show_welcome():
     ascii_car = r"""
@@ -124,10 +136,10 @@ def after_lookup(vin: str, data: dict):
             export_pdf(vin, data)
 
         elif choice == 'S':
-            print_vin_data(vin, data)   # Note: modified to accept data directly
+            print_vin_data(vin, data)   
 
         elif choice == 'N':
-            return  # break back to main loop for a new VIN lookup
+            return
 
         elif choice == 'E':
             print("[green]Exiting VIN CLI. Goodbye![/green]")
@@ -155,6 +167,8 @@ def main(firstUse=True):
         # Fetch data once
         try:
             data = get_vin_data(vin)
+            logger.info(f"User entered VIN: {vin}")
+            logger.info(f"Data from VIN: {data}")
         except VINDataError as e:
             print(f"[red]Error fetching VIN data:[/red] {e}")
             continue
