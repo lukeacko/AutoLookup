@@ -13,6 +13,7 @@
 
 <h2>Features ✨</h2>
 <ul>
+    <li> Sample vin file included, or use https://randomvin.com/ to generate more
     <li><strong>Single VIN Lookup</strong> – Enter a VIN to retrieve detailed vehicle info.</li>
     <li><strong>Batch VIN Lookup</strong> – Process multiple VINs from a file with optional export.</li>
     <li><strong>VIN Comparison</strong> – Compare two VINs side by side and highlight differences.</li>
@@ -22,7 +23,6 @@
             <li>Export history as PDF, Excel, or TXT.</li>
         </ul>
     </li>
-    <li> Sample vin file included, use https://randomvin.com/ to generate more
     <li><strong>Flexible Data Exports</strong>
         <ul>
             <li>Single VIN: TXT or PDF.</li>
