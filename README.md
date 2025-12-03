@@ -22,6 +22,7 @@
             <li>Export history as PDF, Excel, or TXT.</li>
         </ul>
     </li>
+    <li> Sample vin file included, use https://randomvin.com/ to generate more
     <li><strong>Flexible Data Exports</strong>
         <ul>
             <li>Single VIN: TXT or PDF.</li>
