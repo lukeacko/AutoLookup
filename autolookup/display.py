@@ -3,7 +3,8 @@ from historyUtils import load_history
 from rich import print
 from rich.table import Table as RichTable
 from rich.panel import Panel
-
+from rich.markup import escape
+from datetime import datetime
 
 def print_vin_data(vin: str, data: dict):
     try:
@@ -19,6 +20,23 @@ def print_vin_data(vin: str, data: dict):
         logger.error(f"Error displaying VIN data: {e}")
         print("[red]Error displaying VIN data.[/red]")
         return
+ 
+def show_comparison(vin1, data1, vin2, data2):
+    table = RichTable(show_header=True, header_style="bold cyan")
+    table.add_column("Field", style="cyan", no_wrap=True)
+    table.add_column(escape(str(vin1)), style="green")
+    table.add_column(escape(str(vin2)), style="magenta")
+
+    # Combine all unique keys
+    all_keys = sorted(set(data1.keys()).union(data2.keys()))
+    for key in all_keys:
+        val1 = str(data1.get(key, ""))
+        val2 = str(data2.get(key, ""))
+        # Escape any characters that Rich could misinterpret
+        table.add_row(escape(str(key)), escape(val1), escape(val2))
+
+    print(Panel(table, title="[bold cyan]VIN Comparison[/bold cyan]", border_style="cyan"))
+
  
 def show_history():
     history = load_history()
@@ -53,6 +71,7 @@ def show_history():
     print(Panel(table, title="[bold cyan]VIN Lookup History[/bold cyan]", border_style="cyan"))  
 
 def show_welcome():
+
     ascii_car = r"""
         ______
        /|_||_\`.__

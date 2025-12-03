@@ -53,3 +53,4 @@ def get_vin_data(vin: str) -> dict:
             )
         return response.json()
 
+

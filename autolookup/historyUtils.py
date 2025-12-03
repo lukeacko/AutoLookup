@@ -52,7 +52,13 @@ def save_history(history):
         logger.exception("Failed to save VIN history:")
         print(f"[red]Failed to save to history: {e}[/red]")
     history = load_history()
-        
 
+def get_cached_vin(vin: str) -> dict | None:
+    history = load_history()  # Your existing function
+    for entry in reversed(history):  # Search latest first
+        if entry.get("vin") == vin:
+            print(f"[green]Found cached data for VIN: {vin}[/green]")
+            return entry.get("data")
+    return None
 
 

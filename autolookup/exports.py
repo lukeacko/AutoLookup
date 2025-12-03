@@ -8,6 +8,9 @@ from reportlab.platypus import (
     Table as PDFTable,
     TableStyle,
 )
+from openpyxl.styles import PatternFill
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, Border, Side
 from datetime import datetime
 import rich
 from rich import print
@@ -245,4 +248,130 @@ def export_history_to_pdf():
     except Exception as e:
         logger.error(f"Error exporting history to PDF: {e}")
         print("[red]Error exporting history to PDF.[/red]")
-    
+
+def export_comparison_excel(vin1_data: dict, vin2_data: dict, vin1: str, vin2: str):
+    try:
+        filename = f"vin_comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Comparison"
+
+        # Header row
+        headers = ["Field", vin1, vin2]
+        ws.append(headers)
+
+        header_fill = PatternFill("solid", fgColor="D9D9D9")
+        bold_font = Font(bold=True)
+        center_align = Alignment(horizontal="center")
+        border = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin")
+        )
+
+        # Style header
+        for col in range(1, 4):
+            cell = ws.cell(row=1, column=col)
+            cell.font = bold_font
+            cell.fill = header_fill
+            cell.alignment = center_align
+            cell.border = border
+
+        # Populate table
+        all_keys = sorted(set(vin1_data.keys()).union(vin2_data.keys()))
+
+        for row_idx, key in enumerate(all_keys, start=2):
+            val1 = vin1_data.get(key, "")
+            val2 = vin2_data.get(key, "")
+
+            ws.append([key, val1, val2])
+
+            # Style each row
+            ws.cell(row=row_idx, column=1).alignment = Alignment(horizontal="left")
+
+            # Highlight differences
+            if val1 != val2:
+                diff_fill = PatternFill("solid", fgColor="FFF2CC")  # light yellow
+
+                ws.cell(row=row_idx, column=1).fill = diff_fill
+                ws.cell(row=row_idx, column=2).fill = diff_fill
+                ws.cell(row=row_idx, column=3).fill = diff_fill
+
+                ws.cell(row=row_idx, column=2).font = Font(color="FF0000")
+                ws.cell(row=row_idx, column=3).font = Font(color="FF0000")
+
+            # Add borders
+            for col in range(1, 4):
+                ws.cell(row=row_idx, column=col).border = border
+
+        # Auto column widths
+        for col in ws.columns:
+            max_length = 0
+            col_letter = col[0].column_letter
+            for cell in col:
+                if cell.value:
+                    max_length = max(max_length, len(str(cell.value)))
+            ws.column_dimensions[col_letter].width = max_length + 2
+
+        # Freeze header row
+        ws.freeze_panes = "A2"
+
+        wb.save(filename)
+        print(f"[green]Excel comparison exported to {filename}[/green]")
+
+    except Exception as e:
+        print(f"[red]Error exporting Excel comparison: {e}[/red]")
+    except Exception as e:
+        print(f"[red]Error exporting comparison Excel: {e}[/red]")
+def export_comparison_txt(vin1_data: dict, vin2_data: dict, vin1: str, vin2: str):
+    filename = f"VIN_comparison_{vin1}_{vin2}.txt"
+    with open(filename, "w") as f:
+        f.write(f"VIN Comparison: {vin1} vs {vin2}\n\n")
+        all_keys = sorted(set(list(vin1_data.keys()) + list(vin2_data.keys())))
+        for key in all_keys:
+            val1 = vin1_data.get(key, "N/A")
+            val2 = vin2_data.get(key, "N/A")
+            f.write(f"{key}: {val1} | {val2}\n")
+    print(f"[green]Comparison exported to {filename}[/green]")
+def export_comparison_pdf(vin1_data: dict, vin2_data: dict, vin1: str, vin2: str):
+    try:
+        filename = f"vin_comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        doc = SimpleDocTemplate(filename, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=18)
+        styles = getSampleStyleSheet()
+        story = []
+
+        story.append(Paragraph(f"<b>VIN Comparison Report</b>", styles["Title"]))
+        story.append(Spacer(1, 12))
+
+        all_keys = sorted(set(vin1_data.keys()).union(vin2_data.keys()))
+        table_data = [["Field", vin1, vin2]]
+
+        for key in all_keys:
+            val1 = vin1_data.get(key, "")
+            val2 = vin2_data.get(key, "")
+            table_data.append([key, val1, val2])
+
+        table = PDFTable(table_data, colWidths=[150, 200, 200])
+        # Style with highlighting differences
+        style = TableStyle([
+            ("BACKGROUND", (0,0), (-1,0), colors.lightgrey),
+            ("ALIGN", (0,0), (-1,-1), "LEFT"),
+            ("FONTNAME", (0,0), (-1,0), "Helvetica-Bold"),
+            ("GRID", (0,0), (-1,-1), 0.5, colors.grey),
+        ])
+
+        # Highlight differences
+        for i, row in enumerate(table_data[1:], start=1):
+            if row[1] != row[2]:
+                style.add("TEXTCOLOR", (1,i), (2,i), colors.red)
+
+        table.setStyle(style)
+        story.append(table)
+        doc.build(story)
+        print(f"[green]Comparison PDF exported to {filename}[/green]")
+        logger.info(f"Comparison PDF exported to {filename}")
+
+    except Exception as e:
+        print(f"[red]Error exporting comparison PDF: {e}[/red]")
+        logger.error(f"Error exporting comparison PDF: {e}")
