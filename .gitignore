@@ -1,4 +1,6 @@
 *.pyc
+*.pdf
+*.xlsx
 autolookup_history.json
 vin_cli.log
 __pycache__/
