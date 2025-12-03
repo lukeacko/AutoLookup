@@ -4,7 +4,7 @@ from rich.spinner import Spinner
 from rich.live import Live
 from rich.console import Console
 from rich import print
-API_URL = ("https://db.vin/api/v1/vin/{vin}")
+VIN_API_URL = ("https://db.vin/api/v1/vin/{vin}")
 
 class VINDataError(Exception):
     pass
@@ -46,7 +46,7 @@ def validate_vin(vin: str):
 def get_vin_data(vin: str) -> dict:
     rich_console = Console()
     with rich_console.status("[bold green]Fetching VIN data...[/bold green]", spinner="dots"):
-        response = requests.get(API_URL.format(vin=vin.strip()))
+        response = requests.get(VIN_API_URL.format(vin=vin.strip()))
         if not response.ok:
             raise VINDataError(
                 f"API error {response.status_code}: {response.text}"

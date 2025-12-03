@@ -20,7 +20,7 @@ from historyUtils import load_history
 from log import logger
 
 
-
+### Single Export Functions ###
 def export_document(vin: str, data: dict):
     try:
         date = __import__('datetime').datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -91,7 +91,7 @@ def export_pdf(vin: str, data: dict):
         print("[red]Error exporting VIN data to PDF.[/red]")
         return   
     
-
+### Batch Exports ###
 def export_batch_pdf(all_results: list):
     try:
         filename = f"batch_vin_lookup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
@@ -162,7 +162,8 @@ def export_batch_excel(all_results: list):
     except Exception as e:
         logger.error(f"Error exporting batch Excel: {e}")
         print("[red]Error exporting batch Excel.[/red]")
-
+    
+### History Exports ###
 def export_history_to_excel():
     history = load_history()
     if not history:
@@ -249,6 +250,7 @@ def export_history_to_pdf():
         logger.error(f"Error exporting history to PDF: {e}")
         print("[red]Error exporting history to PDF.[/red]")
 
+### Comparison Exports ###
 def export_comparison_excel(vin1_data: dict, vin2_data: dict, vin1: str, vin2: str):
     try:
         filename = f"vin_comparison_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"

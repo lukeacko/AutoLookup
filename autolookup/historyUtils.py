@@ -6,7 +6,7 @@ from log import logger
 
 
 HISTORY_PATH = os.path.join(os.getcwd(), "autolookup_history.json")
-
+## save VIN lookup to history ##
 def save_vin_lookup(data):
     history = load_history()
 
@@ -18,6 +18,7 @@ def save_vin_lookup(data):
 
     history.append(entry)
     save_history(history)
+## load VIN history ##
 def load_history():
     if not os.path.exists(HISTORY_PATH):
         logger.info("History file not found. Creating new one.")
@@ -43,6 +44,7 @@ def load_history():
         logger.exception("Unexpected error while loading history:")
         print(f"[red]Unexpected error loading history: {e}[/red]")
         return []   
+## save VIN history ##
 def save_history(history):
     try:
         with open(HISTORY_PATH, "w") as f:
@@ -52,12 +54,13 @@ def save_history(history):
         logger.exception("Failed to save VIN history:")
         print(f"[red]Failed to save to history: {e}[/red]")
     history = load_history()
-
+## get cached VIN data ##
 def get_cached_vin(vin: str) -> dict | None:
     history = load_history()  # Your existing function
     for entry in reversed(history):  # Search latest first
         if entry.get("vin") == vin:
             print(f"[green]Found cached data for VIN: {vin}[/green]")
+            logger.info(f"Using cached data for VIN: {vin}")
             return entry.get("data")
     return None
 
