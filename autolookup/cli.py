@@ -13,7 +13,6 @@ from reportlab.lib import colors
 
 firstUse = True
 
-
 def show_welcome():
     ascii_car = r"""
         ______
@@ -31,15 +30,8 @@ A fast and elegant tool for decoding vehicle VIN numbers.
 """
     print(Panel.fit(welcome_text, border_style="cyan", padding=(1, 3)))
 
-def print_vin_data(vin: str):      
-    console = Console()
-    with console.status("[cyan]Fetching VIN data...[/cyan]", spinner="dots"):
-        try:
-            data = get_vin_data(vin)
-        except VINDataError as e:
-            print(f"[red]Error fetching VIN data:[/red] {e}")
-            return main(firstUse=False)
-        
+
+def print_vin_data(vin: str, data: dict):      
     table = RichTable(show_header=True, header_style="bold cyan")
     table.add_column("Field", style="cyan", no_wrap=True)
     table.add_column("Value", style="magenta")
@@ -88,7 +80,7 @@ def export_pdf(vin: str, data: dict):
     story.append(Spacer(1, 12))
 
     # VIN Data Table
-    table_data = [["Field", "Value"]]
+    table_data = [["Data", "Value"]]
     for key, value in data.items():
         table_data.append([key, str(value)])
 
@@ -112,57 +104,72 @@ def export_pdf(vin: str, data: dict):
     print(f"[green]PDF exported to {filename}[/green]")
     return main(firstUse=False)
 
-def after_lookup(firstUse, vin:str, data:dict):
-    firstUse = False
+def after_lookup(vin: str, data: dict):
+    while True:
+        menu_text = """
+        [bold cyan]Export TXT[/bold cyan]  - Press [bold]D[/bold]
+        [bold cyan]Export PDF[/bold cyan]  - Press [bold]P[/bold]
+        [bold cyan]Show data again[/bold cyan] - Press [bold]S[/bold]
+        [bold green]New Lookup[/bold green] - Press [bold]N[/bold]
+        [bold red]Exit[/bold red] - Press [bold]E[/bold]
+        """
+        print(Panel.fit(menu_text, border_style="white", padding=(1, 3)))
 
-    menu_text = """
-    [bold cyan]Export TXT[/bold cyan]  - Press [bold]D[/bold]
-    [bold cyan]Export PDF[/bold cyan]  - Press [bold]P[/bold]
-    [bold cyan]Show data again[/bold cyan] - Press [bold]S[/bold]
-    [bold green]New Lookup[/bold green] - Press [bold]N[/bold]
-    [bold red]Exit[/bold red] - Press [bold]E[/bold]
-    """
-    print(Panel.fit(menu_text, border_style="white", padding=(1, 3)))
+        choice = input("Enter your choice: ").strip().upper()
 
-    choice = input("Enter your choice): ").strip().upper()
+        if choice == 'D':
+            export_document(vin, data)
 
-    if choice == 'D':
-        export_document(vin, data)
-    elif choice == 'N':
-        main(firstUse)
-    elif choice == 'E':
-        print("[green]Exiting VIN CLI. Goodbye![/green]")
-        exit()
-    elif choice == 'S':
-        print_vin_data(vin)
-        after_lookup(firstUse, vin, data)
-    elif choice == 'P':
-        export_pdf(vin, data)
-    else:
-        print("[red]Invalid choice. Please try again.[/red]")
-        after_lookup(firstUse, vin, data)
+        elif choice == 'P':
+            export_pdf(vin, data)
 
-def main(firstUse):
-   if firstUse == True:
-    show_welcome()
+        elif choice == 'S':
+            print_vin_data(vin, data)   # Note: modified to accept data directly
 
-   vin = Prompt.ask("[bold yellow]Please enter VIN number[/bold yellow]")
-   try:
-       vin = validate_vin(vin)
-       try:
+        elif choice == 'N':
+            return  # break back to main loop for a new VIN lookup
+
+        elif choice == 'E':
+            print("[green]Exiting VIN CLI. Goodbye![/green]")
+            exit()
+
+        else:
+            print("[red]Invalid choice. Please try again.[/red]")
+
+
+
+def main(firstUse=True):
+    if firstUse:
+        show_welcome()
+
+    while True:
+        vin = Prompt.ask("[bold yellow]Please enter VIN number[/bold yellow]")
+
+        # Validate VIN
+        try:
+            vin = validate_vin(vin)
+        except VINDataError as e:
+            print(f"[red]Invalid VIN:[/red] {e}")
+            continue
+
+        # Fetch data once
+        try:
             data = get_vin_data(vin)
-       except VINDataError as e:
+        except VINDataError as e:
             print(f"[red]Error fetching VIN data:[/red] {e}")
-            return main(firstUse=False)
-   except VINDataError as e:
-       print(f"[red]Invalid VIN:[/red] {e}")
-       return main(firstUse=False)
-  
+            continue
+        except Exception as e:
+            print(f"[red]Unexpected error occurred:[/red] {e}")
+            continue
 
-   print_vin_data(vin)
-   print("\n[green]Thank you for using VIN CLI![/green]")
+        # Display VIN data
+        print_vin_data(vin, data)
 
-   after_lookup(firstUse, vin, data)
+        print("\n[green]Thank you for using VIN CLI![/green]")
+
+        # Menu loop
+        after_lookup(vin, data)
+    
 
 
 main(firstUse=True)
