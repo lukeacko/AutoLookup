@@ -13,6 +13,7 @@
 
 <h2>Features ✨</h2>
 <ul>
+    <li> Sample vin file included, or use https://randomvin.com/ to generate more
     <li><strong>Single VIN Lookup</strong> – Enter a VIN to retrieve detailed vehicle info.</li>
     <li><strong>Batch VIN Lookup</strong> – Process multiple VINs from a file with optional export.</li>
     <li><strong>VIN Comparison</strong> – Compare two VINs side by side and highlight differences.</li>
@@ -44,7 +45,7 @@ pip install -r requirements.txt</code></pre>
 <p><strong>Dependencies:</strong> <code>requests</code>, <code>rich</code>, <code>pandas</code>, <code>openpyxl</code>, <code>reportlab</code></p>
 
 <h2>Usage 🚦</h2>
-<pre><code>python inputs.py</code></pre>
+<pre><code>python __main__.py</code></pre>
 
 <h3>Welcome Screen</h3>
 <pre>
