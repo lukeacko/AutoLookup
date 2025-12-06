@@ -6,11 +6,11 @@ from rich.prompt import Prompt
 from rich.progress import Progress
 from rich.table import Table as RichTable
 
-from api import get_vin_data, validate_vin, retry, VINDataError
+from api import get_vin_data, get_recall_data, validate_vin, retry, VINDataError
 from historyUtils import save_vin_lookup, get_cached_vin
 from manageHistory import manage_history
 from exports import export_batch_txt, export_batch_pdf, export_batch_excel, export_document, export_pdf, export_comparison_txt, export_comparison_pdf, export_comparison_excel
-from display import print_vin_data, show_history, show_comparison
+from display import print_vin_data, show_history, show_comparison, show_recall_table
 from log import logger
 
 ## Input fields / prompts ##
@@ -156,6 +156,7 @@ def after_lookup(vin: str, data: dict):
         menu_text = """
         [bold cyan]Export TXT[/bold cyan]  - Press [bold]D[/bold]
         [bold cyan]Export PDF[/bold cyan]  - Press [bold]P[/bold]
+        [bold cyan]Check Recalls[/bold cyan] - Press [bold]R[/bold]
         [bold cyan]Show data again[/bold cyan] - Press [bold]S[/bold]
         [bold green]New Lookup / Main menu[/bold green] - Press [bold]N[/bold]
         [bold red]Exit[/bold red] - Press [bold]E[/bold]
@@ -175,7 +176,9 @@ def after_lookup(vin: str, data: dict):
 
         elif choice == 'N':
             return initOptions()
-
+        elif choice == 'R':
+            recalls = retry(lambda: get_recall_data(vin), attempts=3, delay=2, backoff=2, exceptions=(Exception,))
+            show_recall_table(vin, recalls)
         elif choice == 'E':
             print("[green]Exiting VIN CLI. Goodbye![/green]")
             exit()

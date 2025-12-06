@@ -20,7 +20,7 @@ def print_vin_data(vin: str, data: dict):
         logger.error(f"Error displaying VIN data: {e}")
         print("[red]Error displaying VIN data.[/red]")
         return
- 
+
 def show_comparison(vin1, data1, vin2, data2):
     table = RichTable(show_header=True, header_style="bold cyan")
     table.add_column("Field", style="cyan", no_wrap=True)
@@ -37,6 +37,26 @@ def show_comparison(vin1, data1, vin2, data2):
 
     print(Panel(table, title="[bold cyan]VIN Comparison[/bold cyan]", border_style="cyan"))
 
+def show_recall_table(vin: str, recalls: list):
+    if not recalls:
+        print(f"[green]No recalls found for VIN {vin}[/green]")
+        return
+
+    table = RichTable(show_header=True, header_style="bold red")
+    table.add_column("Recall #", style="cyan", width=8)
+    table.add_column("Component", style="yellow")
+    table.add_column("Summary", style="magenta")
+    table.add_column("Corrective Action", style="green")
+
+    for idx, recall in enumerate(recalls, start=1):
+        table.add_row(
+            str(idx),
+            recall.get("Component", "N/A"),
+            recall.get("Summary", "N/A"),
+            recall.get("CorrectiveAction", "N/A")
+        )
+
+    print(Panel(table, title=f"Safety Recalls for {vin}", border_style="red"))
  
 def show_history():
     history = load_history()

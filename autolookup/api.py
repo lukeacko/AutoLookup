@@ -4,11 +4,14 @@ from rich.spinner import Spinner
 from rich.live import Live
 from rich.console import Console
 from rich import print
+
 VIN_API_URL = ("https://db.vin/api/v1/vin/{vin}")
+RECALL_API_URL = ("https://api.nhtsa.gov/recalls/recallsByVehicle?vin={vin}")
 
 class VINDataError(Exception):
     pass
 
+rich_console = Console()
 
 ### Retry Logic ####
 def retry(func, attempts=3, delay=1, backoff=2, exceptions=(Exception)):
@@ -42,9 +45,9 @@ def validate_vin(vin: str):
 
     return vin
 
-### API Interaction ###
+### VIN API Interaction ###
 def get_vin_data(vin: str) -> dict:
-    rich_console = Console()
+
     with rich_console.status("[bold green]Fetching VIN data...[/bold green]", spinner="dots"):
         response = requests.get(VIN_API_URL.format(vin=vin.strip()))
         if not response.ok:
@@ -53,4 +56,24 @@ def get_vin_data(vin: str) -> dict:
             )
         return response.json()
 
+### Recall API Interaction ###
+def get_recall_data(vin: str):
+    vin = validate_vin(vin)
+
+    def fetch():
+        with rich_console.status("[bold green]Fetching recall data...[/bold green]", spinner="dots"):
+            response = requests.get(RECALL_API_URL.format(vin=vin))
+            try:
+                data = response.json()
+            except:
+                raise VINDataError("Invalid response from recall API")
+
+            # If results exist → return them
+            if "results" in data:
+                return data["results"]
+
+            # If no results, return empty list, do NOT raise exception
+            return []
+
+    return retry(fetch, attempts=3, delay=2, backoff=2)
 
