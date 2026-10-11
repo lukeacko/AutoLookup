@@ -1,132 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
-<body>
+# AutoLookup 🚗
 
-<h1>VIN CLI 🚗</h1>
-<p>A fast and elegant <strong>command-line interface (CLI)</strong> tool for decoding, comparing, and managing <strong>Vehicle Identification Numbers (VINs)</strong>.</p>
+A Python command-line application for decoding and comparing Vehicle Identification Numbers (VINs), checking safety recalls, keeping lookup history, and exporting results.
 
-<img src="./screenshots/cli_screenshot.png" alt="CLI Screenshot" class="screenshot">
+![AutoLookup CLI](screenshots/cli_screenshot.png)
 
-<h2>Features ✨</h2>
-<ul>
-    <li> Sample vin file included, or use https://randomvin.com/ to generate more
-    <li><strong>Single VIN Lookup</strong> – Enter a VIN to retrieve detailed vehicle info.</li>
-    <li><strong>Batch VIN Lookup</strong> – Process multiple VINs from a file with optional export.</li>
-    <li><strong>VIN Comparison</strong> – Compare two VINs side by side and highlight differences.</li>
-    <li><strong>History Management</strong>
-        <ul>
-            <li>View, delete, or clear previous lookups.</li>
-            <li>Export history as PDF, Excel, or TXT.</li>
-        </ul>
-    </li>
-    <li><strong>Flexible Data Exports</strong>
-        <ul>
-            <li>Single VIN: TXT or PDF.</li>
-            <li>Batch VINs: TXT, PDF, or Excel.</li>
-            <li>VIN Comparison: TXT, PDF, or Excel with differences highlighted.</li>
-        </ul>
-    </li>
-    <li><strong>Robust Validation & Retry</strong>
-        <ul>
-            <li>VIN format validation (17 characters, no I/O/Q).</li>
-            <li>Automatic retry logic with exponential backoff for API requests.</li>
-        </ul>
-    </li>
-</ul>
+## Why I built it
 
-<h2>Installation 🛠️</h2>
-<pre><code>git clone &lt;repository_url&gt;
-cd vin-cli
-pip install -r requirements.txt</code></pre>
-<p><strong>Dependencies:</strong> <code>requests</code>, <code>rich</code>, <code>pandas</code>, <code>openpyxl</code>, <code>reportlab</code></p>
+AutoLookup started as a personal automotive-data project. I wanted to build a practical Python tool around a domain I already understood, while learning how to structure an application across multiple modules and handle external APIs, validation, caching, exports, and failures cleanly.
 
-<h2>Usage 🚦</h2>
-<pre><code>python __main__.py</code></pre>
+## Features
 
-<h3>Welcome Screen</h3>
-<pre>
-    ______
-   /|_||_\`.__
-  (   _    _ _\
-   =`-(_)--(_)-'
+- Single VIN lookup using an external VIN data API
+- Batch lookup from a text file
+- Side-by-side VIN comparison
+- NHTSA safety-recall lookup
+- VIN validation (17 characters; rejects I, O and Q)
+- Automatic retry with exponential backoff for API failures
+- Local lookup history and cached results
+- TXT, PDF and Excel exports
+- Rich terminal interface
+- Rotating application logs for troubleshooting
 
-Welcome to VIN CLI!
-A fast and elegant tool for decoding vehicle VIN numbers.
-</pre>
+## Tech stack
 
-<h3>Main Menu</h3>
-<table>
-<tr><th>Key</th><th>Action</th></tr>
-<tr><td>N</td><td>New VIN Lookup</td></tr>
-<tr><td>B</td><td>Batch VIN Lookup</td></tr>
-<tr><td>C</td><td>Compare VINs</td></tr>
-<tr><td>H</td><td>View History</td></tr>
-<tr><td>M</td><td>Manage History (export/delete)</td></tr>
-<tr><td>E</td><td>Exit CLI</td></tr>
-</table>
+- Python
+- Requests
+- Rich
+- Pandas / OpenPyXL
+- ReportLab
+- Pytest
 
-<h3>After Lookup Options</h3>
-<table>
-<tr><th>Key</th><th>Action</th></tr>
-<tr><td>D</td><td>Export TXT</td></tr>
-<tr><td>P</td><td>Export PDF</td></tr>
-<tr><td>S</td><td>Show data again</td></tr>
-<tr><td>N</td><td>New Lookup / Main Menu</td></tr>
-<tr><td>E</td><td>Exit</td></tr>
-</table>
+## Project structure
 
-<h2>Example Usage 💻</h2>
-<h3>Single VIN Lookup</h3>
-<pre><code>Enter VIN number: 1HGCM82633A004352
-[Displays vehicle data in a table]
-Export TXT? Y/N</code></pre>
+```text
+AutoLookup/
+├── autolookup/
+│   ├── __main__.py       # Application entry point
+│   ├── api.py            # VIN validation, API requests and retry logic
+│   ├── display.py        # Terminal output and tables
+│   ├── exports.py        # TXT, PDF and Excel exports
+│   ├── historyUtils.py   # History and caching
+│   ├── inputs.py         # User prompts and menu flow
+│   ├── log.py            # Rotating file logger
+│   └── manageHistory.py  # History management menu
+├── tests/                # Automated tests
+├── screenshots/
+├── VINS.txt              # Example batch input
+├── requirements.txt
+└── requirements-dev.txt
+```
 
-<h3>Batch VIN Lookup</h3>
-<pre><code>Enter path to VIN file: vins.txt
-Processing 10 VINs...
-Export results? TXT / PDF / Excel / Skip</code></pre>
+## Installation
 
-<h3>VIN Comparison</h3>
-<pre><code>Enter first VIN: 1HGCM82633A004352
-Enter second VIN: 1HGCM82633A004353
-[Displays side-by-side comparison table]
-Export comparison? TXT / PDF / Excel / Skip</code></pre>
+```bash
+git clone https://github.com/lukeacko/AutoLookup.git
+cd AutoLookup
+python -m venv .venv
+```
 
-<h2>History Management 📜</h2>
-<ul>
-<li>View previous VIN lookups</li>
-<li>Delete single entries</li>
-<li>Clear all history</li>
-<li>Export history in TXT, PDF, or Excel</li>
-</ul>
+Activate the virtual environment, then install dependencies:
 
-<h2>Logging 📝</h2>
-<p>All actions, warnings, and errors are logged via <code>log.py</code> for easy troubleshooting and tracking.</p>
+```bash
+pip install -r requirements.txt
+```
 
-<h2>File Structure 📂</h2>
-<pre><code>vin-cli/
-├─ api.py             # VIN validation & API requests
-├─ inputs.py          # CLI prompts & menu navigation
-├─ display.py         # Display VIN data, comparisons, and history
-├─ exports.py         # Export reports (single, batch, comparison)
-├─ manageHistory.py   # Manage history entries
-├─ historyUtils.py    # Save/load VIN lookups to cache/history
-├─ log.py             # Logging utilities
-└─ requirements.txt   # Dependencies</code></pre>
+## Run
 
-<h2>Contributing 🤝</h2>
-<pre><code>git checkout -b feature/my-feature
-git commit -am "Add feature"
-git push origin feature/my-feature
-</code></pre>
-<p>Then open a pull request.</p>
+From the repository root:
 
-<h2>License ⚖️</h2>
-<p>MIT License</p>
+```bash
+python autolookup/__main__.py
+```
 
-</body>
-</html>
+A sample `VINS.txt` file is included for trying the batch-lookup feature.
+
+## Tests
+
+Install the development dependencies and run:
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+```
+
+The current test suite covers VIN validation, retry behaviour, and history/cache handling without making live API requests.
+
+## Notes
+
+AutoLookup depends on third-party APIs, so live vehicle data availability can change independently of the application. Generated history, logs and report files are excluded from Git.
+
+## Future improvements
+
+- Package the application so it can be run with `python -m autolookup`
+- Add mocked API-response tests
+- Improve typed data models for API responses
+- Add configurable API timeouts/settings
+- Expand validation beyond basic VIN format rules
+
+## License
+
+MIT
