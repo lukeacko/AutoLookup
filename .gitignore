@@ -1,7 +1,11 @@
-autolookup/__pycache__/
-*.pyc
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log
+autolookup_history.json
 *.pdf
 *.xlsx
-autolookup_history.json
-vin_cli.log
-
+*_data.txt
+batch_vin_lookup_*.txt
+history_export_*.txt
